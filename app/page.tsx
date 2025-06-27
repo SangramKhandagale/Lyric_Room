@@ -87,7 +87,7 @@ const ModernMusicWebsite = () => {
         </div>
         
         <div className="song-highlight">
-          <h3 className="song-title">"{info.title}"</h3>
+          <h3 className="song-title">{info.title}</h3>
           {info.description && (
             <p className="song-description">{info.description}</p>
           )}
@@ -196,7 +196,7 @@ const ModernMusicWebsite = () => {
         </div>
         
         <div className="story-highlight">
-          <h3 className="story-title">"{story.title}"</h3>
+          <h3 className="story-title">{story.title}</h3>
           <div className="story-content">
             {story.summary.split('\n').map((paragraph, index) => (
               <motion.p 
@@ -299,7 +299,7 @@ const ModernMusicWebsite = () => {
         
         <div className="lyrics-highlight">
           <h3 className="lyrics-title">
-            {isHindi ? 'प्रेरणा स्रोत' : 'Inspired by'} "{lyrics.originalSong}"
+            {isHindi ? 'प्रेरणा स्रोत' : 'Inspired by'} {lyrics.originalSong}
           </h3>
           <p className="lyrics-disclaimer">
             {isHindi ? 'ये पूरी तरह से मौलिक रचनाएं हैं जो मूल गीत से प्रेरित हैं' : 'These are completely original compositions inspired by the original song'}
