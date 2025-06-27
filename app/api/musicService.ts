@@ -75,10 +75,6 @@ const RAPIDAPI_CONFIG = {
 const GROQ_API_KEY = process.env.NEXT_PUBLIC_GROQ_API_KEY;
 
 // Enhanced Utility Functions
-const isHindiText = (text: string): boolean => {
-  return /[\u0900-\u097F]/.test(text);
-};
-
 const detectLanguage = (text: string): 'hindi' | 'english' | 'mixed' => {
   const hindiChars = (text.match(/[\u0900-\u097F]/g) || []).length;
   const totalChars = text.replace(/\s/g, '').length;
@@ -114,14 +110,6 @@ const detectPreferredResponseLanguage = (query: string): 'hindi' | 'english' => 
   
   // Default based on script used in query
   return detectLanguage(query) === 'hindi' ? 'hindi' : 'english';
-};
-
-const cleanSongName = (songName: string): string => {
-  return songName
-    .replace(/["""''']/g, '')
-    .replace(/\s+/g, ' ')
-    .trim()
-    .toLowerCase();
 };
 
 // Enhanced Core Functions
@@ -260,7 +248,7 @@ export const searchSongInfo = async (songName: string, language: 'hindi' | 'engl
           limit: '10',
           related_keywords: 'true'
         }
-      }).catch(err => ({ data: { results: [] } }))
+      }).catch(() => ({ data: { results: [] } }))
     );
 
     // Search for legal links
@@ -271,7 +259,7 @@ export const searchSongInfo = async (songName: string, language: 'hindi' | 'engl
         limit: '8',
         related_keywords: 'false'
       }
-    }).catch(err => ({ data: { results: [] } }));
+    }).catch(() => ({ data: { results: [] } }));
 
     const [infoResults, detailResults, backgroundResults, contextResults, linksResponse] = await Promise.all([
       ...searchPromises,
@@ -319,7 +307,7 @@ export const searchSongInfo = async (songName: string, language: 'hindi' | 'engl
 };
 
 // Enhanced extraction functions
-const extractFromResults = (results: any[], keywords: string[]): string => {
+const extractFromResults = (results: unknown[], keywords: string[]): string => {
   const patterns = [
     // Pattern 1: keyword: value
     (keyword: string, text: string) => {
@@ -339,7 +327,8 @@ const extractFromResults = (results: any[], keywords: string[]): string => {
   ];
 
   for (const result of results) {
-    const text = `${result.title} ${result.description}`.toLowerCase();
+    const resultObj = result as { title?: string; description?: string };
+    const text = `${resultObj.title || ''} ${resultObj.description || ''}`.toLowerCase();
     
     for (const keyword of keywords) {
       for (const pattern of patterns) {
@@ -353,11 +342,12 @@ const extractFromResults = (results: any[], keywords: string[]): string => {
   return '';
 };
 
-const extractYearFromResults = (results: any[]): string => {
+const extractYearFromResults = (results: unknown[]): string => {
   const yearRegex = /(19|20)\d{2}/g;
   
   for (const result of results) {
-    const text = `${result.title} ${result.description}`;
+    const resultObj = result as { title?: string; description?: string };
+    const text = `${resultObj.title || ''} ${resultObj.description || ''}`;
     const years = text.match(yearRegex);
     if (years) {
       return years[0];
@@ -366,14 +356,15 @@ const extractYearFromResults = (results: any[]): string => {
   return '';
 };
 
-const extractAwards = (results: any[]): string[] => {
+const extractAwards = (results: unknown[]): string[] => {
   const awards: string[] = [];
   const awardKeywords = ['award', 'prize', 'recognition', 'filmfare', 'national', 'पुरस्कार'];
   
   for (const result of results) {
-    const text = `${result.title} ${result.description}`.toLowerCase();
+    const resultObj = result as { title?: string; description?: string };
+    const text = `${resultObj.title || ''} ${resultObj.description || ''}`.toLowerCase();
     for (const keyword of awardKeywords) {
-      if (text.includes(keyword)) {
+      if (text.includes(keyword.toLowerCase())) {
         const sentences = text.split(/[.!?]/);
         const awardSentence = sentences.find(sentence => sentence.includes(keyword));
         if (awardSentence) {
@@ -386,13 +377,14 @@ const extractAwards = (results: any[]): string[] => {
   return [...new Set(awards)].slice(0, 3);
 };
 
-const extractPopularity = (results: any[]): string => {
+const extractPopularity = (results: unknown[]): string => {
   const popularityIndicators = ['popular', 'hit', 'famous', 'classic', 'evergreen', 'प्रसिद्ध'];
   
   for (const result of results) {
-    const text = `${result.title} ${result.description}`.toLowerCase();
+    const resultObj = result as { title?: string; description?: string };
+    const text = `${resultObj.title || ''} ${resultObj.description || ''}`.toLowerCase();
     for (const indicator of popularityIndicators) {
-      if (text.includes(indicator)) {
+      if (text.includes(indicator.toLowerCase())) {
         return indicator.charAt(0).toUpperCase() + indicator.slice(1);
       }
     }
@@ -400,7 +392,7 @@ const extractPopularity = (results: any[]): string => {
   return 'Well-known';
 };
 
-const extractLegalLinks = (results: any[]): string[] => {
+const extractLegalLinks = (results: unknown[]): string[] => {
   const links: string[] = [];
   const trustedDomains = [
     'genius.com', 'gaana.com', 'jiosaavn.com', 'youtube.com', 
@@ -408,30 +400,32 @@ const extractLegalLinks = (results: any[]): string[] => {
   ];
   
   for (const result of results) {
-    if (result.url && trustedDomains.some(domain => result.url.includes(domain))) {
-      links.push(result.url);
+    const resultObj = result as { url?: string };
+    if (resultObj.url && trustedDomains.some(domain => resultObj.url?.includes(domain))) {
+      links.push(resultObj.url);
     }
   }
   
   return [...new Set(links)].slice(0, 5);
 };
 
-const generateDetailedInfo = (results: any[], songName: string): string => {
+const generateDetailedInfo = (results: unknown[], songName: string): string => {
   let details = '';
   const relevantResults = results.slice(0, 3);
   
   for (const result of relevantResults) {
-    if (result.description && result.description.length > 50) {
-      details += result.description + ' ';
+    const resultObj = result as { description?: string };
+    if (resultObj.description && resultObj.description.length > 50) {
+      details += resultObj.description + ' ';
     }
   }
   
   return details.trim();
 };
 
-const generateEnhancedDescription = async (songName: string, language: 'hindi' | 'english' | 'mixed', searchResults: any[]): Promise<string> => {
+const generateEnhancedDescription = async (songName: string, language: 'hindi' | 'english' | 'mixed', searchResults: unknown[]): Promise<string> => {
   const contextInfo = searchResults.slice(0, 3)
-    .map(result => result.description)
+    .map(result => (result as { description?: string }).description || '')
     .join(' ')
     .substring(0, 500);
 
