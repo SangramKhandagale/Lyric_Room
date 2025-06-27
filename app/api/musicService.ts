@@ -295,7 +295,7 @@ export const searchSongInfo = async (songName: string, language: 'hindi' | 'engl
       language: language === 'mixed' ? 'hindi' : language,
       legalLinks: extractLegalLinks(linkResults),
       description: await generateEnhancedDescription(songName, language, allResults),
-      detailedInfo: generateDetailedInfo(allResults, songName)
+      detailedInfo: generateDetailedInfo(allResults)
     };
 
     return songInfo;
