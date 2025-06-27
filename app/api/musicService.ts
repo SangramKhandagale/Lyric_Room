@@ -301,7 +301,7 @@ export const searchSongInfo = async (songName: string, language: 'hindi' | 'engl
     return songInfo;
 
   } catch (error) {
-   
+    console.error('Error searching song info:', error);
     return null;
   }
 };
@@ -595,7 +595,7 @@ export const generateContinuationLyrics = async (songName: string, language: 'hi
     const lyrics = data.choices[0].message.content;
 
     // Enhanced verse separation
-    const verses = lyrics.split(/\n\s*\n+/).filter((verse: { trim: () => { (): any; new(): any; length: number; }; }) => verse.trim().length > 0);
+    const verses = lyrics.split(/\n\s*\n+/).filter((verse: { trim: () => {  length: number; }; }) => verse.trim().length > 0);
     const cleanedVerses = verses.map((verse: string) => verse.trim()).slice(0, 3);
 
     return {
@@ -1058,4 +1058,3 @@ export default {
   generateContinuationLyrics,
   formatMusicResponse
 };
-
