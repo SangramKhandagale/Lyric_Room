@@ -409,7 +409,7 @@ const extractLegalLinks = (results: unknown[]): string[] => {
   return [...new Set(links)].slice(0, 5);
 };
 
-const generateDetailedInfo = (results: unknown[], songName: string): string => {
+const generateDetailedInfo = (results: unknown[]): string => {
   let details = '';
   const relevantResults = results.slice(0, 3);
   
