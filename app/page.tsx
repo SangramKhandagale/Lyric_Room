@@ -1,7 +1,7 @@
 "use client"
 import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence, easeInOut } from 'framer-motion';
-import { Search, Music, BookOpen, Mic, Loader2, AlertCircle, Copy, ExternalLink, Award, Disc, Calendar, User, PenTool, Film, Languages, Clock, Disc3, GanttChart, Sun, Moon, Volume2, Sparkles, Play, Heart, Share2 } from 'lucide-react';
+import { motion, AnimatePresence} from 'framer-motion';
+import { Search, Music, BookOpen, Mic, Loader2, AlertCircle, Copy, ExternalLink, Award, Disc, Calendar, User, PenTool, Film, Languages, Clock, Disc3, GanttChart, Sun, Moon,  Sparkles, Play, Heart } from 'lucide-react';
 import { handleMusicQuery, MusicResponse, SongInfo, StorySummary, ContinuationLyrics } from './api/musicService';
 
 const ModernMusicWebsite = () => {
@@ -56,16 +56,7 @@ const ModernMusicWebsite = () => {
     navigator.clipboard.writeText(text);
   };
 
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        duration: 0.6,
-        staggerChildren: 0.1
-      }
-    }
-  };
+  
 
   const itemVariants = {
     hidden: { opacity: 0, y: 20 },
