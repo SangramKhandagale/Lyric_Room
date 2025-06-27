@@ -48,7 +48,7 @@ export interface ContinuationLyrics {
 
 export interface QueryAnalysis {
   type: 'info' | 'story' | 'lyrics' | 'unknown';
-  songName?: string;
+  songName?: string; // eslint-disable-line @typescript-eslint/no-unused-vars
   language: 'hindi' | 'english' | 'mixed';
   intent: string;
   preferredLanguage?: 'hindi' | 'english';
@@ -301,7 +301,7 @@ export const searchSongInfo = async (songName: string, language: 'hindi' | 'engl
     return songInfo;
 
   } catch (error) {
-    console.error('Error searching song info:', error);
+   
     return null;
   }
 };
@@ -1058,3 +1058,4 @@ export default {
   generateContinuationLyrics,
   formatMusicResponse
 };
+
