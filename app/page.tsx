@@ -1,7 +1,7 @@
 "use client"
 import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence, easeInOut } from 'framer-motion';
-import { Search, Music, BookOpen, Mic, Loader2, AlertCircle, Copy, ExternalLink, Award, Disc, Calendar, User, PenTool, Film, Languages, Clock, Disc3, GanttChart, Sun, Moon, Volume2, Sparkles, Play, Heart, Share2 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Search, Music, BookOpen, Mic, Loader2, AlertCircle, Copy, ExternalLink, Award, Disc, Calendar, User, PenTool, Film, Languages, Clock, Disc3, GanttChart, Sun, Moon, Sparkles, Play, Heart } from 'lucide-react';
 import { handleMusicQuery, MusicResponse, SongInfo, StorySummary, ContinuationLyrics } from './api/musicService';
 
 const ModernMusicWebsite = () => {
@@ -56,17 +56,6 @@ const ModernMusicWebsite = () => {
     navigator.clipboard.writeText(text);
   };
 
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        duration: 0.6,
-        staggerChildren: 0.1
-      }
-    }
-  };
-
   const itemVariants = {
     hidden: { opacity: 0, y: 20 },
     visible: {
@@ -96,7 +85,7 @@ const ModernMusicWebsite = () => {
         </div>
         
         <div className="song-highlight">
-          <h3 className="song-title">"{info.title}"</h3>
+          <h3 className="song-title">&ldquo;{info.title}&rdquo;</h3>
           {info.description && (
             <p className="song-description">{info.description}</p>
           )}
@@ -205,7 +194,7 @@ const ModernMusicWebsite = () => {
         </div>
         
         <div className="story-highlight">
-          <h3 className="story-title">"{story.title}"</h3>
+          <h3 className="story-title">&ldquo;{story.title}&rdquo;</h3>
           <div className="story-content">
             {story.summary.split('\n').map((paragraph, index) => (
               <motion.p 
@@ -308,7 +297,7 @@ const ModernMusicWebsite = () => {
         
         <div className="lyrics-highlight">
           <h3 className="lyrics-title">
-            {isHindi ? 'प्रेरणा स्रोत' : 'Inspired by'} "{lyrics.originalSong}"
+            {isHindi ? 'प्रेरणा स्रोत' : 'Inspired by'} &ldquo;{lyrics.originalSong}&rdquo;
           </h3>
           <p className="lyrics-disclaimer">
             {isHindi ? 'ये पूरी तरह से मौलिक रचनाएं हैं जो मूल गीत से प्रेरित हैं' : 'These are completely original compositions inspired by the original song'}
@@ -572,18 +561,18 @@ const ModernMusicWebsite = () => {
             <div className="examples-grid">
               {[
                 response?.data?.language === 'hindi'
-                  ? '"लग जा गले" जानकारी'
-                  : '"Lag ja gale" information',
+                  ? '&ldquo;लग जा गले&rdquo; जानकारी'
+                  : '&ldquo;Lag ja gale&rdquo; information',
                 response?.data?.language === 'hindi'
-                  ? '"तुम ही हो" कहानी'
-                  : '"Tum hi ho" story',
+                  ? '&ldquo;तुम ही हो&rdquo; कहानी'
+                  : '&ldquo;Tum hi ho&rdquo; story',
                 response?.data?.language === 'hindi'
-                  ? '"अभी न जाओ" की तरह बोल लिखें'
-                  : 'Write lyrics like "Abhi na jao"'
+                  ? '&ldquo;अभी न जाओ&rdquo; की तरह बोल लिखें'
+                  : 'Write lyrics like &ldquo;Abhi na jao&rdquo;'
               ].map((example, index) => (
                 <motion.button
                   key={index}
-                  onClick={() => setQuery(example)}
+                  onClick={() => setQuery(example.replace(/&ldquo;|&rdquo;/g, '"'))}
                   className="example-button"
                   disabled={loading}
                   initial={{ opacity: 0, y: 10 }}
@@ -591,12 +580,11 @@ const ModernMusicWebsite = () => {
                   transition={{ delay: 1.1 + index * 0.1 }}
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
-                >
-                  {example}
-                </motion.button>
+                  dangerouslySetInnerHTML={{ __html: example }}
+                />
               ))}
             </div>
-          </motion.div>
+          </div>
         </motion.section>
 
         {/* Error Display */}
