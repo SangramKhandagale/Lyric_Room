@@ -95,7 +95,7 @@ const ModernMusicWebsite = () => {
 
         <div className="info-grid">
           {[
-            { icon: User, label: isHindi ? 'मुख्य गायक/गायिका' : 'Main Artist', value: info.artist },
+            
             info.playbackSinger && info.playbackSinger !== info.artist && { icon: Mic, label: isHindi ? 'प्लेबैक सिंगर' : 'Playback Singer', value: info.playbackSinger },
             info.composer && { icon: Music, label: isHindi ? 'संगीत निर्देशक' : 'Music Director', value: info.composer },
             info.lyricist && { icon: PenTool, label: isHindi ? 'गीतकार' : 'Lyricist', value: info.lyricist },
