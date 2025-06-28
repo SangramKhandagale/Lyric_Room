@@ -67,7 +67,7 @@ const RAPIDAPI_CONFIG = {
   method: 'GET' as const,
   url: 'https://google-search74.p.rapidapi.com/',
   headers: {
-    'x-rapidapi-key': '36f753ce24mshd5d0f628e7126c8p10ce0ajsn936657884bed',
+    'x-rapidapi-key': '7ff1f5b26amsh2a9ae338b3130fap1f2180jsnb798c0ce4482',
     'x-rapidapi-host': 'google-search74.p.rapidapi.com'
   }
 };
