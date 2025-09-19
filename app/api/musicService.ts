@@ -48,7 +48,7 @@ export interface ContinuationLyrics {
 
 export interface QueryAnalysis {
   type: 'info' | 'story' | 'lyrics' | 'unknown';
-  songName?: string; // eslint-disable-line @typescript-eslint/no-unused-vars
+  songName?: string;
   language: 'hindi' | 'english' | 'mixed';
   intent: string;
   preferredLanguage?: 'hindi' | 'english';
@@ -60,6 +60,22 @@ export interface MusicResponse {
   data?: SongInfo | StorySummary | ContinuationLyrics;
   error?: string;
   formattedResponse: string;
+}
+
+// Search result interface for type safety
+interface SearchResult {
+  title?: string;
+  description?: string;
+  url?: string;
+}
+
+// Groq API response interface
+interface GroqApiResponse {
+  choices?: Array<{
+    message?: {
+      content: string;
+    };
+  }>;
 }
 
 // API Configuration
@@ -312,7 +328,7 @@ export const searchSongInfo = async (songName: string, language: 'hindi' | 'engl
 };
 
 // Enhanced extraction functions
-const extractFromResults = (results: unknown[], keywords: string[]): string => {
+const extractFromResults = (results: SearchResult[], keywords: string[]): string => {
   const patterns = [
     // Pattern 1: keyword: value
     (keyword: string, text: string) => {
@@ -332,8 +348,7 @@ const extractFromResults = (results: unknown[], keywords: string[]): string => {
   ];
 
   for (const result of results) {
-    const resultObj = result as { title?: string; description?: string };
-    const text = `${resultObj.title || ''} ${resultObj.description || ''}`.toLowerCase();
+    const text = `${result.title || ''} ${result.description || ''}`.toLowerCase();
     
     for (const keyword of keywords) {
       for (const pattern of patterns) {
@@ -347,12 +362,11 @@ const extractFromResults = (results: unknown[], keywords: string[]): string => {
   return '';
 };
 
-const extractYearFromResults = (results: unknown[]): string => {
+const extractYearFromResults = (results: SearchResult[]): string => {
   const yearRegex = /(19|20)\d{2}/g;
   
   for (const result of results) {
-    const resultObj = result as { title?: string; description?: string };
-    const text = `${resultObj.title || ''} ${resultObj.description || ''}`;
+    const text = `${result.title || ''} ${result.description || ''}`;
     const years = text.match(yearRegex);
     if (years) {
       return years[0];
@@ -361,13 +375,12 @@ const extractYearFromResults = (results: unknown[]): string => {
   return '';
 };
 
-const extractAwards = (results: unknown[]): string[] => {
+const extractAwards = (results: SearchResult[]): string[] => {
   const awards: string[] = [];
   const awardKeywords = ['award', 'prize', 'recognition', 'filmfare', 'national', 'पुरस्कार'];
   
   for (const result of results) {
-    const resultObj = result as { title?: string; description?: string };
-    const text = `${resultObj.title || ''} ${resultObj.description || ''}`.toLowerCase();
+    const text = `${result.title || ''} ${result.description || ''}`.toLowerCase();
     for (const keyword of awardKeywords) {
       if (text.includes(keyword.toLowerCase())) {
         const sentences = text.split(/[.!?]/);
@@ -382,12 +395,11 @@ const extractAwards = (results: unknown[]): string[] => {
   return [...new Set(awards)].slice(0, 3);
 };
 
-const extractPopularity = (results: unknown[]): string => {
+const extractPopularity = (results: SearchResult[]): string => {
   const popularityIndicators = ['popular', 'hit', 'famous', 'classic', 'evergreen', 'प्रसिद्ध'];
   
   for (const result of results) {
-    const resultObj = result as { title?: string; description?: string };
-    const text = `${resultObj.title || ''} ${resultObj.description || ''}`.toLowerCase();
+    const text = `${result.title || ''} ${result.description || ''}`.toLowerCase();
     for (const indicator of popularityIndicators) {
       if (text.includes(indicator.toLowerCase())) {
         return indicator.charAt(0).toUpperCase() + indicator.slice(1);
@@ -397,7 +409,7 @@ const extractPopularity = (results: unknown[]): string => {
   return 'Well-known';
 };
 
-const extractLegalLinks = (results: unknown[]): string[] => {
+const extractLegalLinks = (results: SearchResult[]): string[] => {
   const links: string[] = [];
   const trustedDomains = [
     'genius.com', 'gaana.com', 'jiosaavn.com', 'youtube.com', 
@@ -405,32 +417,30 @@ const extractLegalLinks = (results: unknown[]): string[] => {
   ];
   
   for (const result of results) {
-    const resultObj = result as { url?: string };
-    if (resultObj.url && trustedDomains.some(domain => resultObj.url?.includes(domain))) {
-      links.push(resultObj.url);
+    if (result.url && trustedDomains.some(domain => result.url?.includes(domain))) {
+      links.push(result.url);
     }
   }
   
   return [...new Set(links)].slice(0, 5);
 };
 
-const generateDetailedInfo = (results: unknown[]): string => {
+const generateDetailedInfo = (results: SearchResult[]): string => {
   let details = '';
   const relevantResults = results.slice(0, 3);
   
   for (const result of relevantResults) {
-    const resultObj = result as { description?: string };
-    if (resultObj.description && resultObj.description.length > 50) {
-      details += resultObj.description + ' ';
+    if (result.description && result.description.length > 50) {
+      details += result.description + ' ';
     }
   }
   
   return details.trim();
 };
 
-const generateEnhancedDescription = async (songName: string, language: 'hindi' | 'english' | 'mixed', searchResults: unknown[]): Promise<string> => {
+const generateEnhancedDescription = async (songName: string, language: 'hindi' | 'english' | 'mixed', searchResults: SearchResult[]): Promise<string> => {
   const contextInfo = searchResults.slice(0, 3)
-    .map(result => (result as { description?: string }).description || '')
+    .map(result => result.description || '')
     .join(' ')
     .substring(0, 500);
 
@@ -570,7 +580,7 @@ export const generateStorySummary = async (songName: string, language: 'hindi' |
       return generateFallbackStorySummary(songName, language);
     }
 
-    const data = await response.json();
+    const data: GroqApiResponse = await response.json();
     
     // Check if response has the expected structure
     if (!data.choices || !data.choices[0] || !data.choices[0].message) {
@@ -675,7 +685,7 @@ export const generateContinuationLyrics = async (songName: string, language: 'hi
       return generateFallbackContinuationLyrics(songName, language);
     }
 
-    const data = await response.json();
+    const data: GroqApiResponse = await response.json();
     
     // Check if response has the expected structure
     if (!data.choices || !data.choices[0] || !data.choices[0].message) {
@@ -686,7 +696,7 @@ export const generateContinuationLyrics = async (songName: string, language: 'hi
     const lyrics = data.choices[0].message.content;
 
     // Enhanced verse separation
-    const verses = lyrics.split(/\n\s*\n+/).filter((verse: { trim: () => { (): any; new(): any; length: number; }; }) => verse.trim().length > 0);
+    const verses = lyrics.split(/\n\s*\n+/).filter((verse: string) => verse.trim().length > 0);
     const cleanedVerses = verses.map((verse: string) => verse.trim()).slice(0, 3);
 
     return {
