@@ -72,7 +72,12 @@ const RAPIDAPI_CONFIG = {
   }
 };
 
-const GROQ_API_KEY = process.env.NEXT_PUBLIC_GROQ_API_KEY;
+// Get API key with fallback
+const getGroqApiKey = (): string | null => {
+  return process.env.NEXT_PUBLIC_GROQ_API_KEY || 
+         process.env.GROQ_API_KEY || 
+         null;
+};
 
 // Enhanced Utility Functions
 const detectLanguage = (text: string): 'hindi' | 'english' | 'mixed' => {
@@ -448,11 +453,70 @@ const generateEnhancedDescription = async (songName: string, language: 'hindi' |
   return baseDescription;
 };
 
+// Fallback function for story generation without API
+const generateFallbackStorySummary = (songName: string, language: 'hindi' | 'english'): StorySummary => {
+  const isHindi = language === 'hindi';
+  
+  return {
+    title: songName,
+    language,
+    summary: isHindi 
+      ? `"${songName}" एक भावनात्मक गीत है जो प्रेम, दुख, खुशी और जीवन के विभिन्न रंगों को दर्शाता है। यह गीत अपने मधुर स्वर और गहरी भावनाओं के लिए प्रसिद्ध है। इसमें मानवीय रिश्तों की जटिलताओं और प्रेम की सच्चाई का चित्रण है। गीत के बोल दिल को छू जाते हैं और सुनने वाले को भावनाओं के समुद्र में डुबो देते हैं।`
+      : `"${songName}" is an emotional song that depicts love, sorrow, joy, and various colors of life. This song is famous for its melodious voice and deep emotions. It portrays the complexities of human relationships and the truth of love. The lyrics touch the heart and immerse the listener in an ocean of emotions.`,
+    themes: isHindi 
+      ? ['प्रेम', 'भावना', 'रिश्ते', 'जीवन']
+      : ['love', 'emotion', 'relationships', 'life'],
+    mood: isHindi ? 'भावनात्मक' : 'emotional',
+    characters: isHindi ? ['प्रेमी', 'प्रेमिका'] : ['lover', 'beloved'],
+    culturalContext: isHindi 
+      ? 'भारतीय संगीत परंपरा में निहित'
+      : 'Rooted in Indian musical tradition',
+    historicalBackground: isHindi 
+      ? 'भारतीय सिनेमा का महत्वपूर्ण हिस्सा'
+      : 'Important part of Indian cinema'
+  };
+};
+
+// Fallback function for lyrics generation without API
+const generateFallbackContinuationLyrics = (songName: string, language: 'hindi' | 'english'): ContinuationLyrics => {
+  const isHindi = language === 'hindi';
+  
+  const verses = isHindi 
+    ? [
+        `तेरी यादों में खो जाना\nदिल का ये हाल है\nहर पल बस तुझे सोचना\nमेरी मंजिल तू ही है`,
+        `चांदनी रातों में तेरा\nख्याल आता है\nसपनों की दुनिया में\nतू ही नजर आता है`,
+        `प्रेम की इस राह में\nतू साथ चल\nजिंदगी के हर मोड़ पर\nमेरा हाथ थाम ले`
+      ]
+    : [
+        `In the memories of you I lose myself\nThis is the state of my heart\nEvery moment just thinking of you\nYou are my destination`,
+        `In the moonlit nights\nYour thought comes to mind\nIn the world of dreams\nOnly you appear`,
+        `On this path of love\nWalk with me\nAt every turn of life\nHold my hand`
+      ];
+
+  return {
+    originalSong: songName,
+    language,
+    newVerses: verses,
+    style: isHindi ? 'पारंपरिक बॉलीवुड' : 'Traditional Bollywood',
+    theme: isHindi ? 'प्रेम गीत' : 'Love Song',
+    rhythmPattern: isHindi ? 'मात्रिक छंद' : 'Melodic Meter',
+    rhymeScheme: isHindi ? 'ABAB तुकांत' : 'ABAB Rhyme Scheme'
+  };
+};
+
 /**
- * Enhanced story summary generation with better Hindi support
+ * Enhanced story summary generation with better Hindi support and fallback
  */
 export const generateStorySummary = async (songName: string, language: 'hindi' | 'english' = 'english'): Promise<StorySummary | null> => {
   try {
+    const apiKey = getGroqApiKey();
+    
+    // If no API key, return fallback
+    if (!apiKey) {
+      console.warn('No Groq API key found, using fallback story generation');
+      return generateFallbackStorySummary(songName, language);
+    }
+
     const isHindi = language === 'hindi';
     
     const systemPrompt = isHindi
@@ -481,10 +545,10 @@ export const generateStorySummary = async (songName: string, language: 'hindi' |
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${GROQ_API_KEY}`,
+        'Authorization': `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        model: 'llama3-70b-8192',
+        model: 'llama-3.3-70b-versatile', // Current supported model (2025)
         messages: [
           {
             role: 'system',
@@ -501,10 +565,19 @@ export const generateStorySummary = async (songName: string, language: 'hindi' |
     });
 
     if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      console.error('Groq API error:', await response.text());
+      // Return fallback on API error
+      return generateFallbackStorySummary(songName, language);
     }
 
     const data = await response.json();
+    
+    // Check if response has the expected structure
+    if (!data.choices || !data.choices[0] || !data.choices[0].message) {
+      console.error('Invalid API response structure');
+      return generateFallbackStorySummary(songName, language);
+    }
+    
     const summary = data.choices[0].message.content;
 
     return {
@@ -520,15 +593,24 @@ export const generateStorySummary = async (songName: string, language: 'hindi' |
 
   } catch (error) {
     console.error('Error generating story summary:', error);
-    return null;
+    // Return fallback on any error
+    return generateFallbackStorySummary(songName, language);
   }
 };
 
 /**
- * Enhanced lyric generation with proper Hindi rhythm and rhyme
+ * Enhanced lyric generation with proper Hindi rhythm and rhyme and fallback
  */
 export const generateContinuationLyrics = async (songName: string, language: 'hindi' | 'english' = 'english', style?: string): Promise<ContinuationLyrics | null> => {
   try {
+    const apiKey = getGroqApiKey();
+    
+    // If no API key, return fallback
+    if (!apiKey) {
+      console.warn('No Groq API key found, using fallback lyrics generation');
+      return generateFallbackContinuationLyrics(songName, language);
+    }
+
     const isHindi = language === 'hindi';
     
     const systemPrompt = isHindi
@@ -568,10 +650,10 @@ export const generateContinuationLyrics = async (songName: string, language: 'hi
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${GROQ_API_KEY}`,
+        'Authorization': `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        model: 'llama3-70b-8192',
+        model: 'llama-3.3-70b-versatile', // Current supported model (2025)
         messages: [
           {
             role: 'system',
@@ -588,14 +670,23 @@ export const generateContinuationLyrics = async (songName: string, language: 'hi
     });
 
     if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      console.error('Groq API error:', await response.text());
+      // Return fallback on API error
+      return generateFallbackContinuationLyrics(songName, language);
     }
 
     const data = await response.json();
+    
+    // Check if response has the expected structure
+    if (!data.choices || !data.choices[0] || !data.choices[0].message) {
+      console.error('Invalid API response structure');
+      return generateFallbackContinuationLyrics(songName, language);
+    }
+    
     const lyrics = data.choices[0].message.content;
 
     // Enhanced verse separation
-    const verses = lyrics.split(/\n\s*\n+/).filter((verse: { trim: () => {  length: number; }; }) => verse.trim().length > 0);
+    const verses = lyrics.split(/\n\s*\n+/).filter((verse: { trim: () => { (): any; new(): any; length: number; }; }) => verse.trim().length > 0);
     const cleanedVerses = verses.map((verse: string) => verse.trim()).slice(0, 3);
 
     return {
@@ -610,7 +701,8 @@ export const generateContinuationLyrics = async (songName: string, language: 'hi
 
   } catch (error) {
     console.error('Error generating continuation lyrics:', error);
-    return null;
+    // Return fallback on any error
+    return generateFallbackContinuationLyrics(songName, language);
   }
 };
 
@@ -948,7 +1040,7 @@ const formatContinuationLyrics = (lyrics: ContinuationLyrics): string => {
 };
 
 /**
- * Enhanced main function with better language handling
+ * Enhanced main function with better error handling and fallbacks
  */
 export const handleMusicQuery = async (query: string): Promise<MusicResponse> => {
   try {
